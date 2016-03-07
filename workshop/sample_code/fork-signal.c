@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include <unistd.h>
-// #include <signal.h>
+#include <signal.h>
 
 void signal_handler()
 {
