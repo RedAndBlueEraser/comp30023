@@ -383,64 +383,64 @@ int removefromlinkedlist(linkedlist_t *list, data_t data)
 {
 ////////////////////////////////////////////////////////////////////////////////
     linkedlistnode_t *node,             /* pointer to node to be removed from
-								         * the linked list
+                                         * the linked list
                                          */
                      *prevnode = NULL;  /* pointer to node before node to be
-										 * removed
-										 */
+                                         * removed
+                                         */
 
-	// make sure list is not null and list state is consistent
+    // make sure list is not null and list state is consistent
     assert(list != NULL && isconsistentlinkedlist(list));
 
-	node = list->head;
+    node = list->head;
     // iterate over linked list
     while (node != NULL)
-	{
-		// found node that stores data
-		if (node->data == data)
-		{
-			// removing list's only node
-			if (list->size == 1)
-			{
-				free(list->head);
-				list->head = NULL;
-				list->foot = NULL;
-				list->size = 0;
-			}
-			// removing node from list with more than one node
-			else
-			{
-				// removing list's head
-				if (node == list->head)
-				{
-					list->head = node->next;
-					free(node);
-					list->size--;
-				}
-				// removing node from beyond the list's head
-				else
-				{
-					prevnode->next = node->next;
-					// removing list's foot
-					if (node == list->foot)
-					{
-						list->foot = prevnode;
-					}
-					free(node);
-					list->size--;
-				}
-			}
+    {
+        // found node that stores data
+        if (node->data == data)
+        {
+            // removing list's only node
+            if (list->size == 1)
+            {
+                free(list->head);
+                list->head = NULL;
+                list->foot = NULL;
+                list->size = 0;
+            }
+            // removing node from list with more than one node
+            else
+            {
+                // removing list's head
+                if (node == list->head)
+                {
+                    list->head = node->next;
+                    free(node);
+                    list->size--;
+                }
+                // removing node from beyond the list's head
+                else
+                {
+                    prevnode->next = node->next;
+                    // removing list's foot
+                    if (node == list->foot)
+                    {
+                        list->foot = prevnode;
+                    }
+                    free(node);
+                    list->size--;
+                }
+            }
 
-			return 1;
-		}
-		// this node doesn't store wanted data
-		else
-		{
-			prevnode = node;
-			node = node->next;
-		}
-	}
-	return 0;
+            return 1;
+        }
+        // this node doesn't store wanted data
+        else
+        {
+            prevnode = node;
+            node = node->next;
+        }
+    }
+    return 0;
 }
 
 size_t indexoflinkedlist(linkedlist_t *list, data_t data)
@@ -496,35 +496,35 @@ data_t *toarraylinkedlist(linkedlist_t *list)
     return array;
 }
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////
+// test program. ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
-	int i;
-	linkedlist_t *list = newlinkedlist();
+    int i;
+    linkedlist_t *list = newlinkedlist();
 
-	appendlinkedlist(list, 11);
-	appendlinkedlist(list, 22);
-	appendlinkedlist(list, 33);
-	appendlinkedlist(list, 44);
-	addlinkedlist(list, 4, 55);
-	addlinkedlist(list, 5, 66);
-	addlinkedlist(list, 6, 77);
-	addlinkedlist(list, 7, 88);
-	addlinkedlist(list, 0, 0);
-	appendlinkedlist(list, 99);
+    appendlinkedlist(list, 11);
+    appendlinkedlist(list, 22);
+    appendlinkedlist(list, 33);
+    appendlinkedlist(list, 44);
+    addlinkedlist(list, 4, 55);
+    addlinkedlist(list, 5, 66);
+    addlinkedlist(list, 6, 77);
+    addlinkedlist(list, 7, 88);
+    addlinkedlist(list, 0, 0);
+    appendlinkedlist(list, 99);
 
-	printf("popped number \"%d\" from list\n", poplinkedlist(list));
-	printf("popped number \"%d\" from list\n", poplinkedlist(list));
-	printf("popped number \"%d\" from list\n", poplinkedlist(list));
-	printf("removed number \"%d\" from list\n", removeatlinkedlist(list, 0));
-	printf("removed number \"%d\" from list\n", removeatlinkedlist(list, 4));
-	
-	for (i = 0; i < list->size; i++)
-	{
-		printf("%d ", getatlinkedlist(list, i));
-	}
-	printf("\n");
-	return 0;
+    printf("popped number \"%d\" from list\n", poplinkedlist(list));
+    printf("popped number \"%d\" from list\n", poplinkedlist(list));
+    printf("popped number \"%d\" from list\n", poplinkedlist(list));
+    printf("removed number \"%d\" from list\n", removeatlinkedlist(list, 0));
+    printf("removed number \"%d\" from list\n", removeatlinkedlist(list, 4));
+
+    for (i = 0; i < list->size; i++)
+    {
+        printf("%d ", getatlinkedlist(list, i));
+    }
+    printf("\n");
+    return 0;
 }
