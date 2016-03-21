@@ -1,0 +1,27 @@
+Sample interactive shell session
+
+linux>./shell
+myshell: /bin/ls
+makefile  shell  shell.c
+myshell: /bin/ls -l
+total 20
+-rwxr--r--+ 1 mkirley staff    78 Feb 11 08:53 makefile
+-rwx------+ 1 mkirley staff 10870 Mar 13 12:03 shell
+-rwxr--r--+ 1 mkirley staff  4690 Mar 13 12:03 shell.c
+myshell: /bin/echo "this is fun"
+"this is fun"
+myshell: exit
+linux>
+
+
+linux>./shell
+myshell: /bin/mkdir test
+myshell: /bin/ls
+makefile  shell  shell.c  test
+myshell: exit
+linux>
+
+linux>./shell 2
+myshell: /bin/sh
+sh-4.1$ wait: Interrupted system call
+linux>
