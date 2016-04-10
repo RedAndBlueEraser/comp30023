@@ -99,6 +99,9 @@ void swap_in_process_memory(process_memory_t *proc_mem, int time,
  */
 void swap_out_process_memory(process_memories_list_t *proc_mems_list,
     free_memory_segments_list_t *mem_segs_list);
+/* Swaps out the process memory and releases occupied free memory segment. */
+void swap_out_process_memory_by_process_memory(process_memory_t *proc_mem,
+    free_memory_segments_list_t *mem_segs_list);
 /* Print information about the process memories list. */
 void print_process_memories_list(process_memories_list_t *proc_mems_list);
 /* Print information about the free memory segments list. */

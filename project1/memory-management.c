@@ -448,9 +448,29 @@ void swap_out_process_memory(process_memories_list_t *proc_mems_list,
         swap_out_proc_mem->size,
         mem_segs_list);
 
-    // Select process to be swapped out. Update attributes.
+    // Update process memory attributes.
     swap_out_proc_mem->start_address = IN_DISK;
     swap_out_proc_mem->swap_in_time = 0;
+
+    return;
+}
+
+void swap_out_process_memory_by_process_memory(process_memory_t *proc_mem,
+    free_memory_segments_list_t *mem_segs_list)
+{
+    // Can only swap out processes in memory (not disk).
+    if (!is_process_memory_in_disk(proc_mem))
+    {
+        // Add memory occupied by process back as free memory segment into list.
+        add_new_free_memory_segment_to_free_memory_segments_list(
+            proc_mem->start_address,
+            proc_mem->size,
+            mem_segs_list);
+
+        // Update process memory attributes.
+        proc_mem->start_address = IN_DISK;
+        proc_mem->swap_in_time = 0;
+    }
 
     return;
 }
@@ -607,14 +627,22 @@ int main(int argc, char *argv[])
         print_free_memory_segments_list(mem_segs_list);
         printf("\n======================================================\n");
 
-        remove_process_memory_by_process_id(1, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(2, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(3, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(4, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(5, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(6, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(7, proc_mems_list, mem_segs_list);
-        remove_process_memory_by_process_id(8, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(1, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(2, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(3, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(4, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(5, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(6, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(7, proc_mems_list, mem_segs_list);
+        //remove_process_memory_by_process_id(8, proc_mems_list, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm1, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm2, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm3, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm4, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm5, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm6, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm7, mem_segs_list);
+        swap_out_process_memory_by_process_memory(pm8, mem_segs_list);
 
         printf("\n======================================================\n");
         print_process_memories_list(proc_mems_list);
