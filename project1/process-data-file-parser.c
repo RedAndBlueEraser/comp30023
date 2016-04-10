@@ -16,7 +16,7 @@
 // Function definitions. ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 scheduled_process_t *new_scheduled_process(int start_time, int process_id,
-    int memory_size, int burst_time)
+    int memory_size, int job_time)
 {
     scheduled_process_t *proc;
 
@@ -32,7 +32,7 @@ scheduled_process_t *new_scheduled_process(int start_time, int process_id,
     proc->start_time = start_time;
     proc->process_id = process_id;
     proc->memory_size = memory_size;
-    proc->burst_time = burst_time;
+    proc->job_time = job_time;
 
     return proc;
 }
@@ -84,7 +84,7 @@ scheduled_process_t **parse_process_data_file(FILE *fp)
             atoi(tokens[0]),  // Start time.
             atoi(tokens[1]),  // Process id.
             atoi(tokens[2]),  // Memory size.
-            atoi(tokens[3])   // Burst time.
+            atoi(tokens[3])   // Job time.
             );
 
         /* Add scheduled process to scheduled processes, realloc'ing first if
@@ -113,11 +113,11 @@ scheduled_process_t **parse_process_data_file(FILE *fp)
 void print_scheduled_process(scheduled_process_t *sp)
 {
     printf(
-        "\"Start time: %d, Process id: %d, Memory size: %d, Burst time: %d\"",
+        "\"Start time: %d, Process id: %d, Memory size: %d, Job time: %d\"",
         sp->start_time,
         sp->process_id,
         sp->memory_size,
-        sp->burst_time
+        sp->job_time
         );
     return;
 }

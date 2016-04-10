@@ -27,7 +27,7 @@ typedef struct scheduled_process_t
     int start_time;
     int process_id;
     int memory_size;
-    int burst_time;
+    int job_time;
 } scheduled_process_t;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ typedef struct scheduled_process_t
 ////////////////////////////////////////////////////////////////////////////////
 /* Allocate memory for and initialise a new scheduled process. */
 scheduled_process_t *new_scheduled_process(int start_time, int process_id,
-    int memory_size, int burst_time);
+    int memory_size, int job_time);
 /* Parse a file and create an array of scheduled processes. */
 scheduled_process_t **parse_process_data_file(FILE *fp);
 /* Print information about the scheduled process. */
