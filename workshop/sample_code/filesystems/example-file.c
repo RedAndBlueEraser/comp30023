@@ -70,5 +70,51 @@ int main(int argc, char **argv)
     exit(2);
   } 
 
+  /* delete the symlink */
+  if (unlink("symbar"))
+  {
+	perror("unlink() failure");
+    exit(2);
+  }
+
+  /* remove the created bar file */
+  if (remove("bar") < 0)
+  {
+	perror("remove() failure");
+    exit(2);
+  }
+
+  /* move up a directory */
+  if (chdir(".."))
+  {
+    perror("chdir() failure");
+    exit(2);
+  }
+
+  /* create a symlink to 'foo' named 'symfoo' */
+  if (symlink("foo", "symfoo"))
+  {
+    perror("symlink() failure");
+    exit(2);
+  }
+
+  /* Wait ... explore working directory */
+  printf("Explore working directory ... then [enter] to continue...\n");
+  getchar();
+
+  /* unlink "symfoo" */
+  if (unlink("symfoo"))
+  {
+	perror("unlink() failure");
+	exit(2);
+  }
+
+  /* remove "foo" directory */
+  if (rmdir("foo") < 0)
+  {
+	perror("rmdir() failure");
+	exit(2);
+  }
+
   return 0;
 }
