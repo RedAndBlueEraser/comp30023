@@ -20,8 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #define FCFS_ALGORITHM   0
 #define MULTI_ALGORITHM  1
-#define MAX_FILENAME_LEN 256
-#define MAX_PRIORITY     3
+#define MIN_PRIORITY     3
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data structures. ////////////////////////////////////////////////////////////
@@ -54,9 +53,7 @@ typedef struct pcbs_queue_t
 // Function definitions. ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 process_control_block_t *new_process_control_block(int process_id,
-    int memory_size, int job_time, process_memories_list_t *proc_mems_list,
-    int priority
-    )
+    int memory_size, int job_time, process_memories_list_t *proc_mems_list)
 {
     process_control_block_t *pcb;
 
@@ -80,6 +77,17 @@ process_control_block_t *new_process_control_block(int process_id,
     pcb->cpu_time = 0;
 
     return pcb;
+}
+
+process_control_block_t *new_process_control_block_by_scheduled_process(
+    scheduled_process_t *sp, process_memories_list_t *proc_mems_list)
+{
+    return new_process_control_block(
+        sp->process_id,
+        sp->memory_size,
+        sp->job_time,
+        proc_mems_list
+        );
 }
 
 pcbs_queue_t *new_pcbs_queue()
@@ -202,13 +210,16 @@ void append_pcb_to_pcbs_list(process_control_block_t *pcb, pcbs_queue_t *pcbs_li
     return;
 }
 
-void load_pcb(process_control_block_t *pcb,
-    int time,
+process_control_block_t *pop_front_pcb_from_pcbs_list(pcbs_queue_t *pcbs_list)
+{
+    return pop_front_pcb_from_pcbs_queue(pcbs_list);
+}
+
+void load_pcb(process_control_block_t *pcb, int time,
     process_memories_list_t *proc_mems_list,
     free_memory_segments_list_t *mem_segs_list)
 {
-    // Swap in memory if need to.
-
+    // If process is not in main memory, swap it into main memory.
     if (is_process_memory_in_disk(pcb->process_memory))
     {
         swap_in_process_memory(
@@ -226,6 +237,7 @@ void load_pcb(process_control_block_t *pcb,
 
 void run_pcb(process_control_block_t *pcb)
 {
+    // Set pcb - increment burst time and cpu time.
     pcb->burst_time++;
     pcb->cpu_time++;
     return;
@@ -233,8 +245,8 @@ void run_pcb(process_control_block_t *pcb)
 
 void preempt_pcb(process_control_block_t *pcb)
 {
-    // Set pcb.
-    pcb->priority = (pcb->priority + 1 > MAX_PRIORITY) ? MAX_PRIORITY : pcb->priority + 1;
+    // Set pcb - lower priority.
+    pcb->priority = (pcb->priority + 1 > MIN_PRIORITY) ? MIN_PRIORITY : pcb->priority + 1;
     pcb->process_state = ready;
     pcb->burst_time = 0;
     return;
@@ -263,56 +275,59 @@ int is_pcb_finished(process_control_block_t *pcb)
     return (pcb->cpu_time >= pcb->job_time);
 }
 
-int check_scheduled_processes(scheduled_process_t **sps, int spi,
-    int time,
-    pcbs_queue_t *ready_queue,process_memories_list_t *process_memories_list)
-{
-    scheduled_process_t *next_scheduled_process = sps[spi];
-    process_control_block_t *pcb;
-
-    /* If next scheduled process exists and it is time to "start/load" process,
-     * add it to queue.
-     */
-    if (next_scheduled_process != NULL &&
-        next_scheduled_process->start_time >= time)
-    {
-        // Create a new pcb and add it to pcbs queue and process memories list.
-        pcb = new_process_control_block(
-            next_scheduled_process->process_id,
-            next_scheduled_process->memory_size,
-            next_scheduled_process->job_time,
-            process_memories_list,
-            1);
-        append_pcb_to_pcbs_list(pcb, ready_queue); //TODO: Switch between fcfs.
-        spi++;
-    }
-
-	return spi;
-}
-
-// Multi level shit.
-// TODO: int get_quantum_by_process_control_block(process_control_block_t *pcb);
-// TODO: int is_quantum_finished_by_process_control_block(process_control_block_t *pcb);
-
-void print_scheduler_status(int time,
-    process_control_block_t *running,
+void print_simulation_status(int time, process_control_block_t *running,
     process_memories_list_t *process_memories_list,
-    free_memory_segments_list_t *free_list,
-    int memsize)
+    free_memory_segments_list_t *free_list, int memsize)
 {
-    int memtotalusage = get_process_memories_list_not_in_disk_size(process_memories_list);
+    // Calculate memory usage as a percentage.
+    int memusagesize = get_process_memories_list_not_in_disk_size(process_memories_list);
+    int memusageproportion = 100 * memusagesize;
+    memusageproportion = memusageproportion / memsize + (memusageproportion % memsize != 0);
 
     printf("time %d, %d running, numprocesses=%d, numholes=%d, memusage=%d%%\n",
         time,
         running->process_id,
         get_process_memories_list_not_in_disk_count(process_memories_list),
         get_free_memory_segments_list_count(free_list),
-        100 * memtotalusage / memsize + (100 * memtotalusage % memsize != 0)
+        memusageproportion
         );
     return;
 }
 
-void fcfs_runner(char filename[], int memsize)
+int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
+    int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list)
+{
+    scheduled_process_t *next_scheduled_process = sps[spi];
+
+    /* If next scheduled process exists and it is time to "start/load" process,
+     * add it to queue.
+     */
+    if (next_scheduled_process != NULL &&
+        next_scheduled_process->start_time <= time)
+    {
+        /* Create a new pcb and add it to pcbs queue and add its process memory
+         * to process memories list.
+         */
+        append_pcb_to_pcbs_list(
+            new_process_control_block_by_scheduled_process(
+                next_scheduled_process,
+                proc_mems_list
+                ),
+            ready_queue);
+        spi++;
+    }
+
+    return spi;
+}
+
+// Multi level shit.
+// TODO: int multi__check_scheduled_processes(scheduled_process_t **sps, int spi,
+//           int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
+// TODO: vod multi__scheduler
+// TODO: int get_quantum_by_process_control_block(process_control_block_t *pcb);
+// TODO: int is_quantum_finished_by_process_control_block(process_control_block_t *pcb);
+
+void fcfs_scheduler_runner(char filename[], int memsize)
 {
     int time = 0;  // Time steps.
 
@@ -323,16 +338,23 @@ void fcfs_runner(char filename[], int memsize)
     // Processes that finished executing.
         *terminated_list = new_pcbs_list();
 
-    // Load scheduled processes.
-    FILE *fp = fopen(filename, "r");
+    // Pointer to file holding scheduled processes.
+    FILE *fp;
+    // Scheduled processes.
+    scheduled_process_t **scheduled_processes;
+    // Index of scheduled processes.
+    int spi = 0;
+
+    // Load scheduled processes from file.
+    fp = fopen(filename, "r");
     if (fp == NULL)
     {
         perror("fopen");
         exit(1);
     }
-    scheduled_process_t **scheduled_processes = parse_process_data_file(fp);
-    int spi = 0;  // Index of scheduled processes.
+    scheduled_processes = parse_process_data_file(fp);
     fclose(fp);
+    fp = NULL;
 
     // Process memory images list.
     process_memories_list_t *process_memories_list = new_process_memories_list();
@@ -342,9 +364,9 @@ void fcfs_runner(char filename[], int memsize)
     while (1)
     {
         // Create and add new processes from scheduled processes if need be.
-		spi = check_scheduled_processes(
-            scheduled_processes, spi,
-            time, ready_queue, process_memories_list);
+        spi = fcfs__check_scheduled_processes(
+            scheduled_processes, spi, time, ready_queue, process_memories_list
+            );
 
         // No currently executing process, load next process in queue.
         if (running == NULL)
@@ -355,7 +377,7 @@ void fcfs_runner(char filename[], int memsize)
             if (running != NULL)
             {
                 load_pcb(running, time, process_memories_list, free_list);
-                print_scheduler_status(time, running, process_memories_list, free_list, memsize);
+                print_simulation_status(time, running, process_memories_list, free_list, memsize);
             }
             /* Still no process running. Check if there are more incoming. If
              * break out of loop and exit.
@@ -387,6 +409,7 @@ void fcfs_runner(char filename[], int memsize)
         }
     }
 
+    // Print end simulation message.
     printf("time %d, simulation finished.\n", time);
 
     return;
@@ -394,55 +417,56 @@ void fcfs_runner(char filename[], int memsize)
 
 // TODO: LARGE: multi-level fb cue
 
-/* Test code. */
-extern int  optind;
+extern int optind;
 extern char *optarg;
+
 int main(int argc, char *argv[])
 {
-	char input, *filename;
-	int algorithm, memsize;
+    char input, *filename;
+    int algorithm, memsize;
 
-	// Handle program arguments.
-	while ((input = getopt(argc, argv, "f:a:m:")) != EOF)
-	{
-		switch (input)
-		{
-			case 'f':  // Filename of scheduled processes input.
-				filename = optarg;
-				break;
-			case 'a':  // Algorithm to run.
-				if (strcmp("fcfs", optarg) == 0)
-				{
-					algorithm = FCFS_ALGORITHM;
-				}
-				else if (strcmp("multi", optarg) == 0)
-				{
-					algorithm = MULTI_ALGORITHM;
-				}
-				else
-				{
-					fprintf(stderr, "Invalid algorithm argument\n");
-					exit(1);
-				}
-				break;
-			case 'm':  // Memory size.
-				memsize = atoi(optarg);
-				break;
-			default:
-				fprintf(stderr, "Unknown argument\n");
-				exit(1);
-				break;
-		}
-	}
+    // Handle program arguments.
+    while ((input = getopt(argc, argv, "f:a:m:")) != EOF)
+    {
+        switch (input)
+        {
+            case 'f':  // Filename of scheduled processes input.
+                filename = optarg;
+                break;
+            case 'a':  // Algorithm to run.
+                if (strcmp("fcfs", optarg) == 0)
+                {
+                    algorithm = FCFS_ALGORITHM;
+                }
+                else if (strcmp("multi", optarg) == 0)
+                {
+                    algorithm = MULTI_ALGORITHM;
+                }
+                else
+                {
+                    fprintf(stderr, "Invalid algorithm argument\n");
+                    exit(1);
+                }
+                break;
+            case 'm':  // Memory size.
+                memsize = atoi(optarg);
+                break;
+            default:  // Unknown argument.
+                fprintf(stderr, "Unknown argument\n");
+                exit(1);
+                break;
+        }
+    }
 
-	if (algorithm == FCFS_ALGORITHM)
-	{
-		fcfs_runner(filename, memsize);
-	}
-	else if (algorithm == MULTI_ALGORITHM)
-	{
-		// TODO: multi_runner(filename, memsize);
-	}
+    // Run algorithm schedule.
+    if (algorithm == FCFS_ALGORITHM)
+    {
+        fcfs_scheduler_runner(filename, memsize);
+    }
+    else if (algorithm == MULTI_ALGORITHM)
+    {
+        // TODO: multi_scheduler_runner(filename, memsize);
+    }
 
     return 0;
 }
