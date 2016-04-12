@@ -298,7 +298,7 @@ void free_pcbs_queue(pcbs_queue_t *pcbs_queue)
     process_control_block_t *curr_pcb, *next_pcb;
 
     // Iterate over queue and free each pcb.
-    curr_pcb = pcbs_queue->head;
+    curr_pcb = (pcbs_queue != NULL) ? NULL : pcbs_queue->head;
     while (curr_pcb != NULL)
     {
         next_pcb = curr_pcb->next;
@@ -410,6 +410,11 @@ void fcfs_scheduler_runner(char filename[], int memsize)
     printf("time %d, simulation finished.\n", time);
 
     // Free allocated memory.
+    free_pcbs_queue(ready_queue);
+    free_pcbs_list(terminated_list);
+    free_scheduled_processes(scheduled_processes);
+    free_free_memory_segments_list(free_list);
+    free_process_memories_list(process_memories_list);
 
     return;
 }

@@ -524,7 +524,7 @@ void free_process_memories_list(process_memories_list_t *proc_mems_list)
     process_memory_t *curr_proc_mem, *next_proc_mem;
 
     // Iterate over list and free each process memory.
-    curr_proc_mem = proc_mems_list->head;
+    curr_proc_mem = (proc_mems_list != NULL) ? proc_mems_list->head : NULL;
     while (curr_proc_mem != NULL)
     {
         next_proc_mem = curr_proc_mem->next;
@@ -542,7 +542,7 @@ void free_free_memory_segments_list(free_memory_segments_list_t *mem_segs_list)
     free_memory_segment_t *curr_mem_seg, *next_mem_seg;
 
     // Iterate over list and free each memory segment.
-    curr_mem_seg = mem_segs_list->head;
+    curr_mem_seg = (mem_segs_list != NULL) ? mem_segs_list->head : NULL;
     while (curr_mem_seg != NULL)
     {
         next_mem_seg = curr_mem_seg->next;
