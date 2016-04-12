@@ -1,5 +1,5 @@
 /*
- * process-scheduler.h
+ * process-scheduler.c
  * Version 20160412
  * Written by Harry Wong
  */
@@ -14,40 +14,6 @@
 #include "memory-management.h"
 #include "process-data-file-parser.h"
 #include "process-scheduler.h"
-
-////////////////////////////////////////////////////////////////////////////////
-// Constants ///////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-#define FCFS_ALGORITHM   0
-#define MULTI_ALGORITHM  1
-#define MIN_PRIORITY     3
-
-////////////////////////////////////////////////////////////////////////////////
-// Data structures. ////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-enum process_state_t { ready, running, terminated };
-
-/* Data structure to hold information of a process. */
-typedef struct process_control_block_t
-{
-    struct process_control_block_t *next;
-    int                            process_id;
-    enum process_state_t           process_state;
-    process_memory_t               *process_memory;
-    int                            priority;    // Determines the queue its in.
-    int                            job_time;    // Total time to finish process.
-    int                            burst_time;  // Time ran continuously on CPU.
-    int                            cpu_time;    // Total time ran on CPU.
-} process_control_block_t;
-
-typedef struct pcbs_queue_t
-{
-    struct process_control_block_t *head;
-} pcbs_queue_t;
-
-////////////////////////////////////////////////////////////////////////////////
-// Function prototypes. ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 // Function definitions. ///////////////////////////////////////////////////////
@@ -245,12 +211,19 @@ void run_pcb(process_control_block_t *pcb)
 
 void preempt_pcb(process_control_block_t *pcb)
 {
+    // Set pcb.
+    pcb->process_state = ready;
+    return;
+}
+
+/* TODO: void preempt_pcb(process_control_block_t *pcb)
+{
     // Set pcb - lower priority.
     pcb->priority = (pcb->priority + 1 > MIN_PRIORITY) ? MIN_PRIORITY : pcb->priority + 1;
     pcb->process_state = ready;
     pcb->burst_time = 0;
     return;
-}
+}*/
 
 void terminate_pcb(process_control_block_t *pcb,
     free_memory_segments_list_t *mem_segs_list)
