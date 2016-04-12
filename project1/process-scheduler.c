@@ -298,7 +298,7 @@ void free_pcbs_queue(pcbs_queue_t *pcbs_queue)
     process_control_block_t *curr_pcb, *next_pcb;
 
     // Iterate over queue and free each pcb.
-    curr_pcb = (pcbs_queue != NULL) ? NULL : pcbs_queue->head;
+    curr_pcb = (pcbs_queue != NULL) ? pcbs_queue->head : NULL;
     while (curr_pcb != NULL)
     {
         next_pcb = curr_pcb->next;
