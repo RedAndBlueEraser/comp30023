@@ -89,3 +89,6 @@ int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
     int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
 /* Run the first come first serve process scheduler. */
 void fcfs_scheduler_runner(char filename[], int memsize);
+/* Free all memory allocated for process control block queue or list. */
+void free_pcbs_queue(pcbs_queue_t *pcbs_queue);
+void free_pcbs_list(pcbs_queue_t *pcbs_list);

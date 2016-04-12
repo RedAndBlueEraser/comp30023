@@ -293,6 +293,30 @@ int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
     return spi;
 }
 
+void free_pcbs_queue(pcbs_queue_t *pcbs_queue)
+{
+    process_control_block_t *curr_pcb, *next_pcb;
+
+    // Iterate over queue and free each pcb.
+    curr_pcb = pcbs_queue->head;
+    while (curr_pcb != NULL)
+    {
+        next_pcb = curr_pcb->next;
+        free(curr_pcb);
+        curr_pcb = next_pcb;
+    }
+
+    free(pcbs_queue);
+
+    return;
+}
+
+void free_pcbs_list(pcbs_queue_t *pcbs_list)
+{
+    free_pcbs_queue(pcbs_list);
+    return;
+}
+
 // Multi level shit.
 // TODO: int multi__check_scheduled_processes(scheduled_process_t **sps, int spi,
 //           int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
@@ -384,6 +408,8 @@ void fcfs_scheduler_runner(char filename[], int memsize)
 
     // Print end simulation message.
     printf("time %d, simulation finished.\n", time);
+
+    // Free allocated memory.
 
     return;
 }
