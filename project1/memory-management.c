@@ -1,6 +1,6 @@
 /*
  * memory-management.c
- * Version 20160410
+ * Version 20160412
  * Written by Harry Wong
  */
 
@@ -178,7 +178,7 @@ int get_free_memory_segments_list_count(
     return count;
 }
 
-process_memories_list_t *new_process_memories_list_t()
+process_memories_list_t *new_process_memories_list()
 {
     process_memories_list_t *proc_mems_list;
 
@@ -555,6 +555,50 @@ void free_free_memory_segments_list(free_memory_segments_list_t *mem_segs_list)
     return;
 }
 
+int get_process_memories_list_not_in_disk_count(
+    process_memories_list_t *proc_mems_list)
+{
+    int count = 0;
+
+    process_memory_t *proc_mem;
+
+    // Iterate over list and count processes that are not in disk.
+    proc_mem = proc_mems_list->head;
+    while (proc_mem != NULL)
+    {
+        if (!is_process_memory_in_disk(proc_mem))
+        {
+            count++;
+        }
+
+        proc_mem = proc_mem->next;
+    }
+
+    return count;
+}
+
+int get_process_memories_list_not_in_disk_size(
+    process_memories_list_t *proc_mems_list)
+{
+    int size = 0;
+
+    process_memory_t *proc_mem;
+
+    // Iterate over list and sum processes' sizes that are not in disk.
+    proc_mem = proc_mems_list->head;
+    while (proc_mem != NULL)
+    {
+        if (!is_process_memory_in_disk(proc_mem))
+        {
+            size += proc_mem->size;
+        }
+
+        proc_mem = proc_mem->next;
+    }
+
+    return size;
+}
+
 /* Test code. *//*
 int main(int argc, char *argv[])
 {
@@ -568,7 +612,7 @@ int main(int argc, char *argv[])
     {
         mem_segs_list = new_free_memory_segments_list(150);
 
-        proc_mems_list = new_process_memories_list_t();
+        proc_mems_list = new_process_memories_list();
 
         pm1 = new_process_memory(20, 1);
         pm2 = new_process_memory(20, 2);

@@ -1,6 +1,6 @@
 /*
  * memory-management.h
- * Version 20160410
+ * Version 20160412
  * Written by Harry Wong
  */
 
@@ -64,7 +64,7 @@ void consolidate_free_memory_segments_list(
 int get_free_memory_segments_list_count(
     free_memory_segments_list_t *mem_segs_list);
 /* Allocate memory for and initialise a new process memories list. */
-process_memories_list_t *new_process_memories_list_t();
+process_memories_list_t *new_process_memories_list();
 /* Allocate memory for and initialise a new process memory. */
 process_memory_t *new_process_memory(int size, int process_id);
 /* Append a process memory to the end of the process memories list. */
@@ -110,3 +110,11 @@ void print_free_memory_segments_list(free_memory_segments_list_t *mem_segs_list)
 void free_process_memories_list(process_memories_list_t *proc_mems_list);
 /* Free all memory allocated for free memory segments list. */
 void free_free_memory_segments_list(free_memory_segments_list_t *mem_segs_list);
+/* Get the count of process memories that is not in disk in the process memories
+ * list.
+ */
+int get_process_memories_list_not_in_disk_count(process_memories_list_t *proc_mems_list);
+/* Get the total size of process memories that is not in disk in the process
+ * memories list.
+ */
+int get_process_memories_list_not_in_disk_size(process_memories_list_t *proc_mems_list);
