@@ -140,6 +140,19 @@ void print_scheduled_processes(scheduled_process_t *sps[])
     return;
 }
 
+void free_scheduled_processes(scheduled_process_t *sps[])
+{
+    scheduled_process_t *sp;
+    int i = 0;
+    while ((sp = sps[i]) != NULL)
+    {
+        free(sp);
+        i++;
+    }
+    free(sps);
+    return;
+}
+
 /* Test code. *//*
 int main(int argc, char *argv[])
 {

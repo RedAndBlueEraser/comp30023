@@ -42,3 +42,5 @@ scheduled_process_t **parse_process_data_file(FILE *fp);
 void print_scheduled_process(scheduled_process_t *sp);
 /* Print information about each scheduled process in the array. */
 void print_scheduled_processes(scheduled_process_t *sps[]);
+/* Free all memory allocated for scheduled processes. */
+void free_scheduled_processes(scheduled_process_t *sps[]);
