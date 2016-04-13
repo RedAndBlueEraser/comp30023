@@ -10,6 +10,9 @@
 #define FCFS_ALGORITHM   0
 #define MULTI_ALGORITHM  1
 #define MIN_PRIORITY     3
+#define Q1_QUANTUM       2
+#define Q2_QUANTUM       4
+#define Q3_QUANTUM       8
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data structures. ////////////////////////////////////////////////////////////
@@ -73,6 +76,8 @@ void run_pcb(process_control_block_t *pcb);
  * priority.
  */
 void preempt_pcb(process_control_block_t *pcb);
+/* Decrease priority and reset state to ready for the process. */
+void ready_and_decrease_priority_pcb(process_control_block_t *pcb);
 /* Termiante the process and release its memory from main memory. */
 void terminate_pcb(process_control_block_t *pcb,
     free_memory_segments_list_t *mem_segs_list);
@@ -85,10 +90,16 @@ void print_simulation_status(int time, process_control_block_t *running,
 /* Load, on arrival of, new processes in the ready queue using the first come
  * first serve algorithm.
  */
-int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
-    int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
-/* Run the first come first serve process scheduler. */
-void fcfs_scheduler_runner(char filename[], int memsize);
+int check_scheduled_processes(scheduled_process_t *sps[], int spi, int time,
+    pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
 /* Free all memory allocated for process control block queue or list. */
 void free_pcbs_queue(pcbs_queue_t *pcbs_queue);
 void free_pcbs_list(pcbs_queue_t *pcbs_list);
+/* Get the quantum (time) of a process. */
+int get_quantum_by_pcb(process_control_block_t *pcb);
+/* Check if quantum is exhausted by process. */
+int is_quantum_exhausted_by_pcb(process_control_block_t *pcb);
+/* Run the first come first serve process scheduler. */
+void fcfs_scheduler_runner(char filename[], int memsize);
+/* Run the multi-level feedback queue process scheduler. */
+void multi_scheduler_runner(char filename[], int memsize);

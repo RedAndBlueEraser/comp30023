@@ -216,14 +216,14 @@ void preempt_pcb(process_control_block_t *pcb)
     return;
 }
 
-/* TODO: void preempt_pcb(process_control_block_t *pcb)
+void ready_and_decrease_priority_pcb(process_control_block_t *pcb)
 {
     // Set pcb - lower priority.
     pcb->priority = (pcb->priority + 1 > MIN_PRIORITY) ? MIN_PRIORITY : pcb->priority + 1;
     pcb->process_state = ready;
     pcb->burst_time = 0;
     return;
-}*/
+}
 
 void terminate_pcb(process_control_block_t *pcb,
     free_memory_segments_list_t *mem_segs_list)
@@ -267,15 +267,15 @@ void print_simulation_status(int time, process_control_block_t *running,
     return;
 }
 
-int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
-    int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list)
+int check_scheduled_processes(scheduled_process_t *sps[], int spi, int time,
+    pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list)
 {
     scheduled_process_t *next_scheduled_process = sps[spi];
 
     /* If next scheduled process exists and it is time to "start/load" process,
      * add it to queue.
      */
-    if (next_scheduled_process != NULL &&
+    while (next_scheduled_process != NULL &&
         next_scheduled_process->start_time <= time)
     {
         /* Create a new pcb and add it to pcbs queue and add its process memory
@@ -287,7 +287,9 @@ int fcfs__check_scheduled_processes(scheduled_process_t **sps, int spi,
                 proc_mems_list
                 ),
             ready_queue);
+
         spi++;
+        next_scheduled_process = sps[spi];
     }
 
     return spi;
@@ -317,12 +319,29 @@ void free_pcbs_list(pcbs_queue_t *pcbs_list)
     return;
 }
 
-// Multi level shit.
-// TODO: int multi__check_scheduled_processes(scheduled_process_t **sps, int spi,
-//           int time, pcbs_queue_t *ready_queue, process_memories_list_t *proc_mems_list);
-// TODO: vod multi__scheduler
-// TODO: int get_quantum_by_process_control_block(process_control_block_t *pcb);
-// TODO: int is_quantum_finished_by_process_control_block(process_control_block_t *pcb);
+int get_quantum_by_pcb(process_control_block_t *pcb)
+{
+    switch (pcb->priority)
+    {
+        case 1:
+            return Q1_QUANTUM;
+            break;
+        case 2:
+            return Q2_QUANTUM;
+            break;
+        case 3:
+            return Q3_QUANTUM;
+            break;
+        default:
+            return Q3_QUANTUM;
+            break;
+    }
+}
+
+int is_quantum_exhausted_by_pcb(process_control_block_t *pcb)
+{
+    return (pcb->burst_time >= get_quantum_by_pcb(pcb));
+}
 
 void fcfs_scheduler_runner(char filename[], int memsize)
 {
@@ -361,7 +380,7 @@ void fcfs_scheduler_runner(char filename[], int memsize)
     while (1)
     {
         // Create and add new processes from scheduled processes if need be.
-        spi = fcfs__check_scheduled_processes(
+        spi = check_scheduled_processes(
             scheduled_processes, spi, time, ready_queue, process_memories_list
             );
 
@@ -419,7 +438,125 @@ void fcfs_scheduler_runner(char filename[], int memsize)
     return;
 }
 
-// TODO: LARGE: multi-level fb cue
+void multi_scheduler_runner(char filename[], int memsize)
+{
+    int i;
+
+    int time = 0;  // Time steps.
+
+    // Currently executing process.
+    process_control_block_t *running = NULL;
+    // Processes that need to be executed.
+    pcbs_queue_t *ready_qs[MIN_PRIORITY];
+    for (i = 0; i < MIN_PRIORITY; i++)
+    {
+        ready_qs[i] = new_pcbs_queue();
+    }
+    // Processes that finished executing.
+    pcbs_queue_t *terminated_list = new_pcbs_list();
+
+    // Pointer to file holding scheduled processes.
+    FILE *fp;
+    // Scheduled processes.
+    scheduled_process_t **scheduled_processes;
+    // Index of scheduled processes.
+    int spi = 0;
+
+    // Load scheduled processes from file.
+    fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+        perror("fopen");
+        exit(1);
+    }
+    scheduled_processes = parse_process_data_file(fp);
+    fclose(fp);
+    fp = NULL;
+
+    // Process memory images list.
+    process_memories_list_t *process_memories_list = new_process_memories_list();
+    // Free memory segments list.
+    free_memory_segments_list_t *free_list = new_free_memory_segments_list(memsize);
+
+    while (1)
+    {
+        // Create and add new processes from scheduled processes if need be.
+        spi = check_scheduled_processes(
+            scheduled_processes, spi, time, ready_qs[1 - 1], process_memories_list
+            );
+
+        // No currently executing process, load next process in queue.
+        if (running == NULL)
+        {
+            for (i = 1; i <= MIN_PRIORITY && running == NULL; i++)
+            {
+                running = pop_front_pcb_from_pcbs_queue(ready_qs[i - 1]);
+            }
+
+            // Load next process.
+            if (running != NULL)
+            {
+                load_pcb(running, time, process_memories_list, free_list);
+                print_simulation_status(time, running, process_memories_list, free_list, memsize);
+            }
+            /* Still no process running. Check if there are more incoming. If
+             * break out of loop and exit.
+             */
+            // TODO: Probably need to check ready queue heads.
+            else if (scheduled_processes[spi] == NULL)
+            {
+                break;
+            }
+        }
+
+        // Execute process for one time step.
+        if (running != NULL)
+        {
+            run_pcb(running);
+        }
+
+        // Next time step.
+        //sleep(1);
+        time++;
+
+        if (running != NULL)
+        {
+            /* Current executing process finished, terminate it and make it no
+             * currently executing process.
+             */
+            if (is_pcb_finished(running))
+            {
+                terminate_pcb(running, free_list);
+                append_pcb_to_pcbs_list(running, terminated_list);
+                running = NULL;
+            }
+            /* Current executing process exhausted their quantum, stop it
+             *
+             */
+            else if (is_quantum_exhausted_by_pcb(running))
+            {
+                ready_and_decrease_priority_pcb(running);
+                append_pcb_to_pcbs_list(running, ready_qs[running->priority - 1]);
+                running = NULL;
+            }
+        }
+    }
+
+    // Print end simulation message.
+    printf("time %d, simulation finished.\n", time);
+
+    // Free allocated memory.
+    for (i = 0; i < MIN_PRIORITY; i++)
+    {
+        free_pcbs_queue(ready_qs[i]);
+    }
+    free_pcbs_list(terminated_list);
+    free_scheduled_processes(scheduled_processes);
+    free_free_memory_segments_list(free_list);
+    free_process_memories_list(process_memories_list);
+
+    return;
+}
 
 extern int optind;
 extern char *optarg;
@@ -469,7 +606,7 @@ int main(int argc, char *argv[])
     }
     else if (algorithm == MULTI_ALGORITHM)
     {
-        // TODO: multi_scheduler_runner(filename, memsize);
+        multi_scheduler_runner(filename, memsize);
     }
 
     return 0;
