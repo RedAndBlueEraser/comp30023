@@ -13,8 +13,8 @@ CFLAGS 	= -Wall
 ## SRC = Source files.
 ## EXE = Executable name.
 
-SRC =		process-data-file-parser.c memory-management.c process-scheduler.c
-OBJ =		process-data-file-parser.o memory-management.o process-scheduler.o
+SRC =		process-data-file-parser.c memory-management.c process-scheduler.c simulation.c
+OBJ =		process-data-file-parser.o memory-management.o process-scheduler.o simulation.o
 EXE = 		simulation
 
 ## Top level target is executable.
@@ -36,3 +36,4 @@ clobber: clean
 process-data-file-parser.o:	process-data-file-parser.h
 memory-management.o:		memory-management.h
 process-scheduler.o:		process-scheduler.h memory-management.h process-data-file-parser.h
+simulation.o:				process-scheduler.h memory-management.h process-data-file-parser.h

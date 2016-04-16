@@ -7,10 +7,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Libraries. //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include "memory-management.h"
 #include "process-data-file-parser.h"
 #include "process-scheduler.h"
@@ -502,7 +500,6 @@ void multi_scheduler_runner(char filename[], int memsize)
             /* Still no process running. Check if there are more incoming. If
              * break out of loop and exit.
              */
-            // TODO: Probably need to check ready queue heads.
             else if (scheduled_processes[spi] == NULL)
             {
                 break;
@@ -530,8 +527,8 @@ void multi_scheduler_runner(char filename[], int memsize)
                 append_pcb_to_pcbs_list(running, terminated_list);
                 running = NULL;
             }
-            /* Current executing process exhausted their quantum, stop it
-             *
+            /* Current executing process exhausted their quantum, stop it and
+             * re-add it to end of the queue with a lower priority.
              */
             else if (is_quantum_exhausted_by_pcb(running))
             {
@@ -556,58 +553,4 @@ void multi_scheduler_runner(char filename[], int memsize)
     free_process_memories_list(process_memories_list);
 
     return;
-}
-
-extern int optind;
-extern char *optarg;
-
-int main(int argc, char *argv[])
-{
-    char input, *filename;
-    int algorithm, memsize;
-
-    // Handle program arguments.
-    while ((input = getopt(argc, argv, "f:a:m:")) != EOF)
-    {
-        switch (input)
-        {
-            case 'f':  // Filename of scheduled processes input.
-                filename = optarg;
-                break;
-            case 'a':  // Algorithm to run.
-                if (strcmp("fcfs", optarg) == 0)
-                {
-                    algorithm = FCFS_ALGORITHM;
-                }
-                else if (strcmp("multi", optarg) == 0)
-                {
-                    algorithm = MULTI_ALGORITHM;
-                }
-                else
-                {
-                    fprintf(stderr, "Invalid algorithm argument\n");
-                    exit(1);
-                }
-                break;
-            case 'm':  // Memory size.
-                memsize = atoi(optarg);
-                break;
-            default:  // Unknown argument.
-                fprintf(stderr, "Unknown argument\n");
-                exit(1);
-                break;
-        }
-    }
-
-    // Run algorithm schedule.
-    if (algorithm == FCFS_ALGORITHM)
-    {
-        fcfs_scheduler_runner(filename, memsize);
-    }
-    else if (algorithm == MULTI_ALGORITHM)
-    {
-        multi_scheduler_runner(filename, memsize);
-    }
-
-    return 0;
 }
