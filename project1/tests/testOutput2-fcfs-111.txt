@@ -1,0 +1,8 @@
+time 0, 1 running, numprocesses=1, numholes=1, memusage=21%
+time 30, 2 running, numprocesses=1, numholes=1, memusage=34%
+time 60, 3 running, numprocesses=1, numholes=1, memusage=12%
+time 90, 4 running, numprocesses=1, numholes=1, memusage=18%
+time 120, 5 running, numprocesses=1, numholes=1, memusage=27%
+time 150, 6 running, numprocesses=1, numholes=0, memusage=100%
+time 180, 7 running, numprocesses=1, numholes=1, memusage=85%
+time 210, simulation finished.

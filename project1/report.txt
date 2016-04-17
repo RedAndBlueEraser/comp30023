@@ -1,0 +1,58 @@
+COMP30023: Computer Systems
+2016 Semester 1 Project 1
+Written by Harry Wong (harryw1)
+
+
+## First Come, First Served (FCFS) ##
+
+There is no process preemption (and hence, no context switches) when using the FCFS algorithm as the CPU scheduler,
+regardless of processes’ start time, job time, memory consumption, or main memory size. This is indicated in the table
+below containing the summaries of several simulations -- the number of scheduled processes = the number of lines of
+output.
+
+--< Algorithm: FCFS >-----------------------------------------------------------
+#   Input                       Mem    # of lines       Max # of       Max # of
+                                size   (excl. finish)   procs in mem   mem holes
+--------------------------------------------------------------------------------
+1   specInput.txt (4 procs)     100    4                1              1
+2   specInput.txt (4 procs)     200    4                1              1
+3   testInput1.txt (25 procs)   100    25               1              1
+4   testInput2.txt (7 procs)    111    7                1              1
+5   testInput3.txt (5 procs)    3      5                1              1
+
+Under FCFS, a process is only loaded into memory and remains so until terminated; the memory is only occupied by at most
+one process at one time. This means there is no external fragmentation, as indicated in the results above by only ever
+having at most one memory hole.
+
+
+## Multi-level Feedback Queue (MLFQ) ##
+
+--< Algorithm: MLFQ >------------------------------------------------------------------------------
+#  Input                      Quantum        Mem   # of lines      Max # of      Max # of   Max mem
+                              values         size  (excl. finish)  procs in mem  mem holes  usage
+---------------------------------------------------------------------------------------------------
+1  specInput.txt (4 procs)    (2,4,8)        100   15              2             1          100%
+2  specInput.txt (4 procs)    (5,10,15)      100   10              2             1          100%
+3  testInput1.txt (25 procs)  (2,4,8)        100   228             14            2          100%
+4  testInput1.txt (25 procs)  (5,10,15)      100   133             14            2          100%
+5  testInput1.txt (25 procs)  (100,101,102)  100   25              1             1          100%
+6  testInput4.txt (8 procs)   (2,4,8)        100   64              2             1          75%
+7  testInput4.txt (8 procs)   (2,4,8)        150   64              4             2          98%
+8  testInput4.txt (8 procs)   (2,4,8)        300   64              8             4          100%
+9  testInput4.txt (8 procs)   (2,4,8)        1000  64              8             4          30%
+10 testInput4.txt (8 procs)   (5,10,15)      1000  64              5             2          19%
+
+From the MLFQ simulation summary table above, there are several interesting observations:
+
+Unlike FCFS, there are context switches for MLFQ, as indicated by # of lines >= # of scheduled processes. This is
+because MLFQ is a preemptive scheduling algorithm.
+
+Larger quantum values reduce the number of context switches. If given large enough quantum values (first quantum value
+>= longest process job time) (eg. result 5), there will be no context switches at all, and the MLFQ algorithm acts
+exactly like FCFS. This means larger quantum values tend to reduce memory fragmentation as well (eg. Max#OfMemHoles in
+results 9 vs 10).
+
+Surprisingly, increasing memory doesn’t necessarily reduce maximum memory usage but can instead increase usage as shown
+by MaxMemUsage in results 6,7,8. This is because with larger main memory, process memories are less frequently swapped
+out to disk when a new process is swapped in. This also attributes to the increase in memory fragmentation (eg.
+Max#OfMemHoles in results 6 vs 7 vs 8).
