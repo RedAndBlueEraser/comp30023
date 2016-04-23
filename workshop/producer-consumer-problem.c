@@ -4,7 +4,6 @@
  * Written by Harry Wong
  */
 
-#include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,7 +11,7 @@
 
 #define FALSE               0
 #define TRUE                1
-#define MAX_RAND_SLEEP_TIME 2
+#define MAX_RAND_SLEEP_TIME 3
 
 typedef int buffer_item;
 #define BUFFER_SIZE 5
@@ -21,10 +20,22 @@ buffer_item buffer[BUFFER_SIZE];
 int buffer_space = BUFFER_SIZE;
 pthread_mutex_t buffer_lock;
 
+int buffer_has_space();
+int buffer_has_item();
 int insert_item(buffer_item item);
 int remove_item(buffer_item *item);
 void *producer(void *param);
 void *consumer(void *param);
+
+int buffer_has_space()
+{
+    return buffer_space > 0;
+}
+
+int buffer_has_item()
+{
+    return buffer_space < BUFFER_SIZE;
+}
 
 int insert_item(buffer_item item)
 {
@@ -32,24 +43,24 @@ int insert_item(buffer_item item)
     /* what happens if space is not available? */
     /* return 0 if successful, otherwise
     return -1 if unsuccessful */
-    int buffer_has_space,  // Does the buffer has space to insert?
-        buffer_pos;        // Position in buffer to insert to.
+    int buf_has_space,  // Does the buffer has space to insert?
+        buf_pos;        // Position in buffer to insert to.
+
+    while (!buffer_has_space());
 
     pthread_mutex_lock(&buffer_lock);
 
-    buffer_has_space = (buffer_space > 0);
-    if (buffer_has_space)
+    if ((buf_has_space = buffer_has_space()))
     {
-        buffer_pos = BUFFER_SIZE - buffer_space;
-        assert(0 <= buffer_pos && buffer_pos < BUFFER_SIZE);  // TODO: Remove.
+        buf_pos = BUFFER_SIZE - buffer_space;
 
-        buffer[buffer_pos] = item;
+        buffer[buf_pos] = item;
         buffer_space--;
     }
 
     pthread_mutex_unlock(&buffer_lock);
 
-    return buffer_has_space ? 0 : -1;
+    return buf_has_space ? 0 : -1;
 }
 
 int remove_item(buffer_item *item)
@@ -59,22 +70,22 @@ int remove_item(buffer_item *item)
     /* return 0 if successful, otherwise
     return - 1 if unsuccessful */
     int i,
-        buffer_is_full,  // Is the buffer full?
-        buffer_pos;      // Last occupied position in buffer.
+        buf_has_item,  // Is the buffer full?
+        buf_pos;      // Last occupied position in buffer.
+
+    while (!buffer_has_item());
 
     pthread_mutex_lock(&buffer_lock);
 
-    buffer_is_full = (buffer_space < BUFFER_SIZE);
-    if (buffer_is_full)
+    if ((buf_has_item = buffer_has_item()))
     {
-        buffer_pos = BUFFER_SIZE - buffer_space - 1;
-        assert(0 <= buffer_pos && buffer_pos < BUFFER_SIZE);  // TODO: Remove.
+        buf_pos = BUFFER_SIZE - buffer_space - 1;
 
         *item = buffer[0];
         buffer_space++;
 
         // Push items up buffer.
-        for (i = 0; i < buffer_pos; i++)
+        for (i = 0; i < buf_pos; i++)
         {
             buffer[i] = buffer[i + 1];
         }
@@ -82,7 +93,7 @@ int remove_item(buffer_item *item)
 
     pthread_mutex_unlock(&buffer_lock);
 
-    return buffer_is_full ? 0 : -1;
+    return buf_has_item ? 0 : -1;
 }
 
 int main(int argc, char *argv[])
@@ -94,7 +105,7 @@ int main(int argc, char *argv[])
     if (argc < 4)
     {
         fprintf(stderr, "Not enough arguments\n");
-        exit(1);
+        return 1;
     }
     else
     {
@@ -111,7 +122,7 @@ int main(int argc, char *argv[])
     if (pthread_mutex_init(&buffer_lock, NULL) != 0)
     {
         printf("pthread_mutex_init");
-        exit(1);
+        return 1;
     }
 
     /* 3. Create producer threads */
@@ -119,14 +130,14 @@ int main(int argc, char *argv[])
     if (producer_threads == NULL)
     {
         perror("malloc");
-        exit(1);
+        return 1;
     }
     for (i = 0; i < n_producer_threads; i++)
     {
         if (pthread_create(&producer_threads[i], NULL, producer, NULL) != 0)
         {
             perror("pthread_create");
-            exit(1);
+            return 1;
         }
     }
 
@@ -135,14 +146,14 @@ int main(int argc, char *argv[])
     if (consumer_threads == NULL)
     {
         perror("malloc");
-        exit(1);
+        return 1;
     }
     for (i = 0; i < n_consumer_threads; i++)
     {
         if (pthread_create(&consumer_threads[i], NULL, consumer, NULL) != 0)
         {
             perror("pthread_create");
-            exit(1);
+            return 1;
         }
     }
 
@@ -150,13 +161,12 @@ int main(int argc, char *argv[])
     sleep(exec_duration);
 
     /* 6. Exit */
-    printf("exit!");
     for (i = 0; i < n_producer_threads; i++)
     {
         if (pthread_join(producer_threads[i], NULL) != 0)
         {
             perror("pthread_join");
-            exit(1);
+            return 1;
         }
     }
     for (i = 0; i < n_consumer_threads; i++)
@@ -164,11 +174,15 @@ int main(int argc, char *argv[])
         if (pthread_join(consumer_threads[i], NULL) != 0)
         {
             perror("pthread_join");
-            exit(1);
+            return 1;
         }
     }
     pthread_exit(NULL);
-    pthread_mutex_destroy(&buffer_lock);
+    if (pthread_mutex_destroy(&buffer_lock) != 0)
+    {
+        perror("pthread_mutex_destroy");
+        return 1;
+    }
     return 0;
 }
 
