@@ -20,15 +20,12 @@ buffer_item buffer[BUFFER_SIZE];
 int buffer_space = BUFFER_SIZE;
 pthread_mutex_t buffer_lock;
 
-pthread_mutex_t exit_threads_lock;
-
 int buffer_has_space();
 int buffer_has_item();
 int insert_item(buffer_item item);
 int remove_item(buffer_item *item);
 void *producer(void *param);
 void *consumer(void *param);
-int is_exit_threads();
 
 int buffer_has_space()
 {
@@ -99,29 +96,10 @@ int remove_item(buffer_item *item)
     return buf_has_item ? 0 : -1;
 }
 
-int is_exit_threads()
-{
-    switch (pthread_mutex_trylock(&exit_threads_lock))
-    {
-        case 0:
-            pthread_mutex_unlock(&exit_threads_lock);
-            return TRUE;
-        default:
-            return FALSE;
-    }
-}
-
 int main(int argc, char *argv[])
 {
     int i, exec_duration, n_producer_threads, n_consumer_threads;
     pthread_t *producer_threads, *consumer_threads;
-
-    if (pthread_mutex_init(&exit_threads_lock, NULL) != 0)
-    {
-        perror("pthread_mutex_init");
-        return 1;
-    }
-    pthread_mutex_lock(&exit_threads_lock);
 
     /* 1. get cmd line arguments */
     if (argc < 4)
@@ -183,8 +161,7 @@ int main(int argc, char *argv[])
     sleep(exec_duration);
 
     /* 6. Exit */
-    pthread_mutex_unlock(&exit_threads_lock);
-    for (i = 0; i < n_producer_threads; i++)
+    /*for (i = 0; i < n_producer_threads; i++)
     {
         if (pthread_join(producer_threads[i], NULL) != 0)
         {
@@ -200,7 +177,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-    pthread_exit(NULL);
+    pthread_exit(NULL);*/
     if (pthread_mutex_destroy(&buffer_lock) != 0)
     {
         perror("pthread_mutex_destroy");
@@ -212,7 +189,7 @@ int main(int argc, char *argv[])
 void *producer(void *param)
 {
     buffer_item item;
-    while (!is_exit_threads())
+    while (TRUE)
     {
         /* sleep a random time period */
         sleep(rand() % MAX_RAND_SLEEP_TIME + 1);
@@ -227,13 +204,12 @@ void *producer(void *param)
             printf("Producer produced %d\n",item);
         }
     }
-    return NULL;
 }
 
 void *consumer(void *param)
 {
     buffer_item item;
-    while (!is_exit_threads())
+    while (TRUE)
     {
         /* sleep a random time period */
         sleep(rand() % MAX_RAND_SLEEP_TIME + 1);
@@ -247,5 +223,4 @@ void *consumer(void *param)
             printf("Consumer consumed %d\n",item);
         }
     }
-    return NULL;
 }
