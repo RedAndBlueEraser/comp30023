@@ -13,6 +13,8 @@
 #define TRUE                1
 #define MAX_RAND_SLEEP_TIME 3
 
+int is_exiting = FALSE;
+
 typedef int buffer_item;
 #define BUFFER_SIZE 5
 
@@ -43,24 +45,27 @@ int insert_item(buffer_item item)
     /* what happens if space is not available? */
     /* return 0 if successful, otherwise
     return -1 if unsuccessful */
-    int buf_has_space,  // Does the buffer has space to insert?
-        buf_pos;        // Position in buffer to insert to.
+    int is_inserted_item = FALSE,  // Has the item been inserted yet?
+        buf_pos;                   // Position in buffer to insert to.
 
-    while (!buffer_has_space());
-
-    pthread_mutex_lock(&buffer_lock);
-
-    if ((buf_has_space = buffer_has_space()))
+    while (!is_inserted_item && !is_exiting)
     {
-        buf_pos = BUFFER_SIZE - buffer_space;
+        pthread_mutex_lock(&buffer_lock);
 
-        buffer[buf_pos] = item;
-        buffer_space--;
+        if (buffer_has_space())
+        {
+            buf_pos = BUFFER_SIZE - buffer_space;
+
+            buffer[buf_pos] = item;
+            buffer_space--;
+
+            is_inserted_item = TRUE;
+        }
+
+        pthread_mutex_unlock(&buffer_lock);
     }
 
-    pthread_mutex_unlock(&buffer_lock);
-
-    return buf_has_space ? 0 : -1;
+    return is_inserted_item ? 0 : -1;
 }
 
 int remove_item(buffer_item *item)
@@ -70,30 +75,33 @@ int remove_item(buffer_item *item)
     /* return 0 if successful, otherwise
     return - 1 if unsuccessful */
     int i,
-        buf_has_item,  // Is the buffer full?
-        buf_pos;      // Last occupied position in buffer.
+        is_removed_item = FALSE,  // Has an item been removed yet?
+        buf_pos;                  // Last occupied position in buffer.
 
-    while (!buffer_has_item());
-
-    pthread_mutex_lock(&buffer_lock);
-
-    if ((buf_has_item = buffer_has_item()))
+    while (!is_removed_item && !is_exiting)
     {
-        buf_pos = BUFFER_SIZE - buffer_space - 1;
+        pthread_mutex_lock(&buffer_lock);
 
-        *item = buffer[0];
-        buffer_space++;
-
-        // Push items up buffer.
-        for (i = 0; i < buf_pos; i++)
+        if (buffer_has_item())
         {
-            buffer[i] = buffer[i + 1];
+            buf_pos = BUFFER_SIZE - buffer_space - 1;
+
+            *item = buffer[0];
+            buffer_space++;
+
+            // Push items up buffer.
+            for (i = 0; i < buf_pos; i++)
+            {
+                buffer[i] = buffer[i + 1];
+            }
+
+            is_removed_item = TRUE;
         }
+
+        pthread_mutex_unlock(&buffer_lock);
     }
 
-    pthread_mutex_unlock(&buffer_lock);
-
-    return buf_has_item ? 0 : -1;
+    return is_removed_item ? 0 : -1;
 }
 
 int main(int argc, char *argv[])
@@ -161,7 +169,8 @@ int main(int argc, char *argv[])
     sleep(exec_duration);
 
     /* 6. Exit */
-    /*for (i = 0; i < n_producer_threads; i++)
+    is_exiting = TRUE;
+    for (i = 0; i < n_producer_threads; i++)
     {
         if (pthread_join(producer_threads[i], NULL) != 0)
         {
@@ -177,7 +186,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-    pthread_exit(NULL);*/
+    pthread_exit(NULL);
     if (pthread_mutex_destroy(&buffer_lock) != 0)
     {
         perror("pthread_mutex_destroy");
@@ -197,7 +206,19 @@ void *producer(void *param)
         item = rand();
         if (insert_item(item) == -1)
         {
-            fprintf(stderr,"Buffer is full\n");
+            if (is_exiting == TRUE)
+            {
+                fprintf(
+                    stderr,
+                    "Producer thread with thread id %ld exiting\n",
+                    pthread_self()
+                    );
+                return NULL;
+            }
+            else
+            {
+                fprintf(stderr,"Buffer is full\n");
+            }
         }
         else
         {
@@ -216,7 +237,19 @@ void *consumer(void *param)
         /* generate a random item */
         if (remove_item(&item) == -1)
         {
-            fprintf(stderr,"Buffer is empty\n");
+            if (is_exiting == TRUE)
+            {
+                fprintf(
+                    stderr,
+                    "Consumer thread with thread id %ld exiting\n",
+                    pthread_self()
+                    );
+                return NULL;
+            }
+            else
+            {
+                fprintf(stderr,"Buffer is empty\n");
+            }
         }
         else
         {
