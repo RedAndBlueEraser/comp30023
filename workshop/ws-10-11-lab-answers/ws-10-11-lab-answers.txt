@@ -1,0 +1,84 @@
+# Network tools #
+ping -c 8 www.uwa.edu.au
+--- www.uwa.edu.au.cdn.cloudflare.net ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7026ms
+rtt min/avg/max/mdev = 15.385/15.490/15.638/0.129 ms
+
+ping -c 8 www.unimelb.edu.au
+--- www.unimelb.edu.au ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7010ms
+rtt min/avg/max/mdev = 0.987/1.126/1.357/0.112 ms
+
+ping -c 8 www.commbank.com.au
+--- e10370.ksd.akamaiedge.net ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7026ms
+rtt min/avg/max/mdev = 15.233/15.393/15.827/0.218 ms
+
+ping -c 8 www.google.com
+--- www.google.com ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7023ms
+rtt min/avg/max/mdev = 12.639/12.877/12.994/0.177 ms
+
+ping -c 8 www.wikipedia.com
+--- www.wikipedia.com ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7181ms
+rtt min/avg/max/mdev = 170.656/170.886/171.135/0.137 ms
+
+ping -c 8 www.yahoo.com
+--- fd-fp3.wg1.b.yahoo.com ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7189ms
+rtt min/avg/max/mdev = 166.658/178.595/190.497/7.629 ms
+
+# Wireshark #
+## Inspecting the trace ##
+GET / HTTP/1.1\r\n
+User-Agent: Wget/1.13.4 (cygwin)\r\n
+Accept: */*\r\n
+Host: www.google.com\r\n
+Connection: Keep-Alive\r\n
+\r\n
+
+Application message is 111 bytes
+TCP header is 20 bytes
+IP, as IPv4, header is 20 bytes
+Ethernet protocol header is 14 bytes
+Entire frame transmitted is 111+20+20+14=165 bytes
+
+## Protocol overhead ##
+The main portion of the download consists of nine packets, 7 of which are of
+size 1514 bytes, one is 782 bytes, and the remaining one is 333 bytes.
+
+In each packet, 14 bytes are for the tthernet protocol header, 20 bytes are for
+the IPv4 header, 20 bytes are for the TCP header, and the remaining bytes carry
+the application content.
+
+This totals to 54 bytes of overhead per packet, amounting to 9*54=486 bytes of
+overhead in the main portion of the download. The content downloaded is 11227
+bytes.
+
+So for the main download portion worth of 11227+486=11713 bytes, 486 bytes are
+overhead and the remaining 11227 bytes are content. This measures to 4.15%
+of download bytes taken up by protocol overhead.
+
+## IP packet structure ##
+1. The IP address of my computer is 10.96.200.173
+   The IP address of the remote server is 203.13.161.84
+2. Total length include the IP header plus IP payload.
+3. Identification field change for different packets regardless if the packets
+   are in one TCP connection. Identifcation field is incrementing by one for
+   each subsequent packet.
+4. TTL field for packets sent from my computer is 128. It is not the maximum
+   possible value (2^8=255).
+5. By checking whether the "More Fragments" bit is set or not.
+6. Length of IP Header is 20 bytes. It is encoded in the header length field as
+   a count of 32 bits (5*32=160 bits=20 bytes).
+
+## IP header checksum ##
+1. 0x4500 0x00BE 0x3031 0x4000 0x8006 0x8A99 0x0A60 0xC8AD 0xCB0D 0xA154'
+2. 0x4500 + 0x00BE + 0x3031 + 0x4000 + 0x8006 + 0x8A99 + 0x0A60 + 0xC8AD +
+   0xCB0D + 0xA154 = 0x3FFFC
+3. 0xFFFC + 0x0003 = 0xFFFF
+4. Since 0xFFFF, therefore correct checksum.
+
+## TCP segment structure ##
+TODO
