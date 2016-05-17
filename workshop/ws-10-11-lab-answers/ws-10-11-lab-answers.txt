@@ -81,4 +81,13 @@ of download bytes taken up by protocol overhead.
 4. Since 0xFFFF, therefore correct checksum.
 
 ## TCP segment structure ##
-TODO
+TCP Options that are carried on the SYN packets are:
+ Maximum segment size: 1460 bytes
+ Window scale: 0
+ TCP SACK Permitted Option: True
+
+## Demultiplexing Keys ##
+1. The Ethernet header field "Type" tells the next higher layer is IP. The value
+   used in this field to indicate "IP" is 0x0800 (2048 as decimal).
+2. The IP header field "Protocol" tells the next higher layer is TCP. The value used in this field
+   to indicate "TCP" is 6.
