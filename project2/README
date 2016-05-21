@@ -14,7 +14,7 @@ Run "make client" to produce client executable only.
 Run "./server [PortNo] [SecretCode]" to start the server. SecretCode can be omitted for server to generate a random
 secret code for each connected client.
 
-Run "./client [Host/ServerIPAddress]" to start the client.
+Run "./client [Host/ServerIPAddress] [PortNo]" to start the client.
 
 As of today (2016-05-21), it is possible to compile and run both the server and client executables on
 digitalis.eng.unimelb.edu.au and on my home machine (Ubuntu 15.10). The compiled client executable compiled on digitalis
@@ -30,3 +30,6 @@ message-helpers.c:69. Nothing is written to stdout and all server output is writ
 When the client is running, user input is prompted with "> ". Enter the guess of four capital characters (A, B, C, D, E
 or/and F) without any spaces or other characters. Hit enter to send input. Avoid entering input longer than 150
 characters.
+
+To pipe in an input file to the client for testing, run "./client [Host/ServerIPAddress] [PortNo] < [TestFile]". The
+test file should be a plaintext file with four characters per line. See test.txt as an example.
