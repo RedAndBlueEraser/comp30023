@@ -62,29 +62,53 @@ int is_valid_secret_code(char *secret_code)
     return i == SECRET_CODE_LEN && secret_code[SECRET_CODE_LEN] == '\0';
 }
 
-/*
-int main(int argc, char *argv[])
+int get_secret_code_guess_feedback(
+    char *actual,
+    char *guess,
+    int *correct_positions_count,
+    int *correct_colors_count)
 {
-    int i;
-    char sc[SECRET_CODE_LEN + 1];
+    int i, j, visited[SECRET_CODE_LEN] = { 0 }, visited_2[SECRET_CODE_LEN] = { 0 };
 
-    assert(is_valid_secret_code("AFGB") == 0);
-    assert(is_valid_secret_code("ABZA") == 0);
-    assert(is_valid_secret_code("ABBc") == 0);
-    assert(is_valid_secret_code("ABB" ) == 0);
-    assert(is_valid_secret_code("A BB") == 0);
-    assert(is_valid_secret_code(" ABB") == 0);
-    assert(is_valid_secret_code("ZZAA") == 0);
-    assert(is_valid_secret_code("ABBBB") == 0);
+    *correct_positions_count = 0;
+    *correct_colors_count = 0;
 
-    for (i = 0; i < 8; i++)
+    // Count correct positions, marking which positions were visited.
+    for (i = 0; i < SECRET_CODE_LEN; i++)
     {
-        get_random_secret_code(sc);
-        printf("%s\n", sc);
-        assert(is_valid_secret_code(sc));
-        sleep(1);
+        if (guess[i] == actual[i])
+        {
+            (*correct_positions_count)++;
+            visited[i] = 1;
+        }
     }
 
-    return 0;
+    /* Count correct colours, ignoring visited positions and marking which
+     * positions of the actual secret code was visited.
+     */
+    for (i = 0; i < SECRET_CODE_LEN; i++)
+    {
+        if (visited[i])
+        {
+            continue;
+        }
+        else
+        {
+            for (j = 0; j < SECRET_CODE_LEN; j++)
+            {
+                if (visited[j] || visited_2[j])
+                {
+                    continue;
+                }
+                else if (guess[i] == actual[j])
+                {
+                    (*correct_colors_count)++;
+                    visited_2[j] = 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    return (*correct_positions_count) == SECRET_CODE_LEN;
 }
-*/

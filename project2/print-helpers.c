@@ -47,12 +47,6 @@ void fprint_current_time(FILE *stream)
     return;
 }
 
-void print_current_time()
-{
-    fprint_current_time(stdout);
-    return;
-}
-
 void fprint_ip_address(FILE *stream, struct sockaddr_in address)
 {
     unsigned long ip_address_as_ulong = address.sin_addr.s_addr;
@@ -65,21 +59,9 @@ void fprint_ip_address(FILE *stream, struct sockaddr_in address)
     return;
 }
 
-void print_ip_address(struct sockaddr_in address)
-{
-    fprint_ip_address(stdout, address);
-    return;
-}
-
 void fprint_current_time_and_ip_address(FILE *stream, struct sockaddr_in address)
 {
     fprint_current_time(stream);
     fprint_ip_address(stream, address);
-    return;
-}
-
-void print_current_time_and_ip_address(struct sockaddr_in address)
-{
-    fprint_current_time_and_ip_address(stdout, address);
     return;
 }

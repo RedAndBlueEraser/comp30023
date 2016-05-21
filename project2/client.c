@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "game-protocol.h"
+#include "message-helpers.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constants ///////////////////////////////////////////////////////////////////
@@ -24,6 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Function prototypes. ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+int receive_message(int socket_fd, char buf[], int buf_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Function definitions. ///////////////////////////////////////////////////////
@@ -34,6 +36,9 @@ int main(int argc, char *argv[])
     int server_port;
     struct sockaddr_in server_address;
     int socket_fd;
+
+    char buffer[GP_SIZE] = "";
+    int is_end_game = 0;
 
     // Not enough program arguments.
     if (argc < 3)
@@ -76,41 +81,43 @@ int main(int argc, char *argv[])
         exit(1);
 	}
 
-    const int BUFFER_LEN = 511,
-        GAME_PROTOCOL_HEADER_LEN = 7;
-    const char
-        MESSAGE          [8] = "MESSAGE",
-        GUEST_REQUEST    [8] = "REQUEST",
-        GUESS_FEEDBACK   [8] = "FEEDBAC",
-        GUESS_INVALID    [8] = "INVALID",
-        GAME_SUCCESS     [8] = "SUCCESS",
-        GAME_FAILURE     [8] = "FAILURE";
-
-    char buffer[511 + 1] = "", c;
-    int is_end_game = 0, guesses_count = 0, correct_colors_count = 0,
-        correct_positions_count = 0;
+    /******************** Begin communication with server. ********************/
 
     while (!is_end_game)
     {
-        read(socket_fd, buffer, sizeof(buffer));
+        receive_message(socket_fd, buffer, GP_SIZE);
 
-        if (strncmp(buffer, MESSAGE, GAME_PROTOCOL_HEADER_LEN) == 0)
+        if (strncmp(buffer, GP_DISP_MSG, GP_HEADER_SIZE) == 0)
         {
-            printf("%s", &(buffer[GAME_PROTOCOL_HEADER_LEN]));
+            printf("%s", &(buffer[GP_HEADER_SIZE]));
         }
-        else if (strncmp(buffer, GUEST_REQUEST, GAME_PROTOCOL_HEADER_LEN) == 0)
+        else if (strncmp(buffer, GP_GUESS_REQ, GP_HEADER_SIZE) == 0)
         {
-            printf(">");
-            fgets(buffer, BUFFER_LEN + 1, stdin);
+            printf("> ");
+            fgets(buffer, GP_SIZE, stdin);
             buffer[strcspn(buffer, "\r\n")] = 0;
-            write(socket_fd, buffer, strlen(buffer));
+            send_message(socket_fd, buffer, GP_SIZE);
         }
-        else if (strncmp(buffer, GUESS_INVALID, GAME_PROTOCOL_HEADER_LEN) == 0)
+        else if (strncmp(buffer, GP_GUESS_INV, GP_HEADER_SIZE) == 0)
         {
-            printf("Invalid guess.\n>");
-            fgets(buffer, BUFFER_LEN + 1, stdin);
+            printf("Invalid guess.\n> ");
+            fgets(buffer, GP_SIZE, stdin);
             buffer[strcspn(buffer, "\r\n")] = 0;
-            write(socket_fd, buffer, strlen(buffer));
+            send_message(socket_fd, buffer, GP_SIZE);
+        }
+        else if (strncmp(buffer, GP_GUESS_FBK, GP_HEADER_SIZE) == 0)
+        {
+            printf("%s", &(buffer[GP_HEADER_SIZE]));
+        }
+        else if (strncmp(buffer, GP_GAME_SUCC, GP_HEADER_SIZE) == 0)
+        {
+            printf("You win! =)\n");
+            is_end_game = 1;
+        }
+        else if (strncmp(buffer, GP_GAME_FAIL, GP_HEADER_SIZE) == 0)
+        {
+            printf("You lose. Better luck next time.\n");
+            is_end_game = 1;
         }
 
         memset(buffer, 0, sizeof(buffer));

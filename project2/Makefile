@@ -6,15 +6,15 @@
 ## CC = Compiler.
 ## CFLAGS = Compiler flags.
 CC = gcc
-CFLAGS = -g -fstack-protector-all -Wall -pthread -lnsl
+CFLAGS = -Wall -pthread -lnsl
 
 ## OBJ = Object files.
 ## SRC = Source files.
 ## EXE = Executable name.
-GLOBALSRC =
+GLOBALSRC = message-helpers.c
 SERVERSRC = print-helpers.c secret-code.c server.c
 CLIENTSRC = client.c
-GLOBALOBJ =
+GLOBALOBJ = message-helpers.o
 SERVEROBJ = print-helpers.o secret-code.o server.o
 CLIENTOBJ = client.o
 SERVEREXE = server
@@ -40,7 +40,8 @@ clobber: clean
 	/bin/rm $(SERVEREXE) $(CLIENTEXE)
 
 ## Dependencies
+message-helpers.o: message-helpers.h
 print-helpers.o: print-helpers.h
 secret-code.o: secret-code.h
-server.o: game-protocol.h print-helpers.h secret-code.h
-client.o: game-protocol.h
+server.o: game-protocol.h message-helpers.h print-helpers.h secret-code.h
+client.o: game-protocol.h message-helpers.h

@@ -23,3 +23,11 @@
 char *get_random_secret_code(char *secret_code);
 /* Check if secret code is valid. */
 int is_valid_secret_code(char *secret_code);
+/* Get the feedback on the guess of the actual secret code. Returns 1 if correct
+ * guess else 0.
+ */
+int get_secret_code_guess_feedback(
+    char *actual,
+    char *guess,
+    int *correct_positions_count,
+    int *correct_colors_count);
