@@ -32,4 +32,5 @@ or/and F) without any spaces or other characters. Hit enter to send input. Avoid
 characters.
 
 To pipe in an input file to the client for testing, run "./client [Host/ServerIPAddress] [PortNo] < [TestFile]". The
-test file should be a plaintext file with four characters per line. See test.txt as an example.
+test file should be a plaintext file with four characters per line. See test.txt as an example. The test file must have
+at least ten lines (for each of ten guesses) or else the client might get stuck on sending invalid guesses.
