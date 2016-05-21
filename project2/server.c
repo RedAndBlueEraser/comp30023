@@ -489,7 +489,8 @@ void *pthread_routine(void *param)
         // Message feedback message to client.
         sprintf(
             feedback_message,
-            "%d correct positions, %d correct colours.\n",
+            "Guess: %d, Correct positions: %d, Correct colours: %d.\n",
+            guesses_count + 1,
             correct_positions_count,
             correct_colors_count
             );
