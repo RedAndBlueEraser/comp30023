@@ -34,7 +34,7 @@ int receive_message(int socket_fd, char buf[], int msg_size)
     // If the entire message was not received, return with error.
     if (rcvd_msg_size != msg_size)
     {
-        perror("read");
+        //perror("read");
         rcvd_msg_size = READ_ERROR;
     }
 
@@ -52,7 +52,7 @@ int send_message(int socket_fd, char msg[], int msg_size)
         // If the client is not receiving, return with error.
         if (n == -1 && errno == EPIPE)
         {
-            perror("write");
+            //perror("write");
             sent_msg_size = WRITE_CONN_LOST_ERROR;
             break;
         }
@@ -66,7 +66,7 @@ int send_message(int socket_fd, char msg[], int msg_size)
     // If the entire message was not sent, return with error.
     if (sent_msg_size != msg_size && sent_msg_size != WRITE_CONN_LOST_ERROR)
     {
-        perror("write");
+        //perror("write");
         sent_msg_size = WRITE_OTHER_ERROR;
     }
 
