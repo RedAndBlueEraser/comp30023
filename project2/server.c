@@ -76,6 +76,7 @@ FILE *log_file_fd;
 int socket_fd;
 struct sockaddr_in server_address;
 int clients_count = 0, clients_win_count = 0;
+pthread_attr_t pthread_attr;
 pthread_mutex_t log_file_mutex, clients_count_mutex, clients_win_count_mutex;
 
 void sig_handler(int sig_number)
@@ -117,6 +118,12 @@ void sig_handler(int sig_number)
 
         // Close file.
         fclose(log_file_fd);
+
+        // Destroy pthread attribute.
+        if (pthread_attr_destroy(&pthread_attr) != 0)
+        {
+            perror("pthread_attr_destroy");
+        }
 
         // Destroy pthread mutexes.
         pthread_mutex_unlock(&log_file_mutex);
@@ -299,6 +306,18 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Initialise pthread attribute.
+    if (pthread_attr_init(&pthread_attr) != 0)
+    {
+        perror("pthread_attr_init");
+        exit(1);
+    }
+    if (pthread_attr_setdetachstate(&pthread_attr, PTHREAD_CREATE_DETACHED) != 0)
+    {
+        perror("pthread_attr_setdetachstate");
+        exit(1);
+    }
+    
     // Initialise pthread mutex.
     if (pthread_mutex_init(&log_file_mutex, NULL) != 0)
     {
@@ -373,7 +392,7 @@ int main(int argc, char *argv[])
         }
 
         // Create thread to serve client.
-        if (pthread_create(&pthread, NULL, pthread_routine, (void*)pthread_arg) != 0)
+        if (pthread_create(&pthread, &pthread_attr, pthread_routine, (void*)pthread_arg) != 0)
         {
             perror("pthread_create");
 
