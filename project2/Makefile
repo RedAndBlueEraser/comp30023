@@ -12,10 +12,10 @@ CFLAGS = -Wall -pthread -lnsl
 ## SRC = Source files.
 ## EXE = Executable name.
 GLOBALSRC = message-helpers.c
-SERVERSRC = print-helpers.c secret-code.c server.c
+SERVERSRC = print-helpers.c secret-code.c server.c resource-usage.c
 CLIENTSRC = client.c
 GLOBALOBJ = message-helpers.o
-SERVEROBJ = print-helpers.o secret-code.o server.o
+SERVEROBJ = print-helpers.o secret-code.o server.o resource-usage.o
 CLIENTOBJ = client.o
 SERVEREXE = server
 CLIENTEXE = client
@@ -43,5 +43,6 @@ clobber: clean
 message-helpers.o: message-helpers.h
 print-helpers.o: print-helpers.h
 secret-code.o: secret-code.h
+resource-usage.o: resource-usage.h
 server.o: game-protocol.h message-helpers.h print-helpers.h secret-code.h
 client.o: game-protocol.h message-helpers.h

@@ -21,6 +21,7 @@
 #include "game-protocol.h"
 #include "message-helpers.h"
 #include "print-helpers.h"
+#include "resource-usage.h"
 #include "secret-code.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +84,6 @@ void sig_handler(int sig_number)
 {
     struct rusage usage;
 
-    // TODO: mutex and log file fd mutex and performance and report.
     if (sig_number == SIGINT)
     {
         // Close socket.
@@ -100,7 +100,7 @@ void sig_handler(int sig_number)
         fprintf(log_file_fd, "%d clients successfully guessed the secret code\n", clients_win_count);
         fflush(log_file_fd);
 
-        // Log server performance stats.
+        // Log server performance stats (CPU).
         getrusage(RUSAGE_SELF, &usage);
         fprintf(
             log_file_fd,
@@ -113,6 +113,19 @@ void sig_handler(int sig_number)
             "%ld.%06lds CPU time spent in executing in kernel mode\n",
             usage.ru_stime.tv_sec,
             usage.ru_stime.tv_usec
+            );
+        fflush(log_file_fd);
+
+        // Log server performance stats (Memory).
+        fprintf(
+            log_file_fd,
+            "%dkB Peak virtual memory usage during server session\n",
+            get_proc_self_status_info("VmPeak")
+            );
+        fprintf(
+            log_file_fd,
+            "%dkB Current virtual memory usage immediately before server shutdown\n",
+            get_proc_self_status_info("VmSize")
             );
         fflush(log_file_fd);
 
