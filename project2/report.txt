@@ -1,0 +1,42 @@
+COMP30023: Computer Systems
+2016 Semester 1 Project 2
+Written by Harry Wong (harryw1)
+
+## Performance and Resource Usage ##
+
+The server program was able to successfully compile and run on both digitalis and Nectar (running Ubuntu 15.10). The
+client programs were able to successfully compile and run on dimefox, nutmeg, digitalis, Nectar (running Ubuntu 15.10)
+and home VM (running Ubuntu 15.10).
+
+Clients were able to concurrently connect to the servers and conduct experiments with different client actions, such as
+entering both valid and invalid input, killing the client process, and winning or losing the game. None of the tested
+actions crashed the server. The following are the results of some of the tests that were conducted:
+
+#   Server      Clients     Clients   User mode   Kernel mode   Peak memory   Finish memory   Notes
+                connected   won       CPU time    CPU time      usage         usage
+----------------------------------------------------------------------------------------------------------------------------------
+1   digitalis   0           0         0.000999s   0.001999s     9408kB        9408kB          1&2 are equal tests
+2   Nectar      0           0         0.000000s   0.004000s     6540kB        6540kB          1&2 are equal tests
+3   digitalis   5           2         0.001999s   0.043993s     226500kB      163104kB        3&4 are equal tests
+4   Nectar      5           2         0.020000s   0.012000s     219536kB      156144kB        3&4 are equal tests
+5   Nectar      10          0         0.032000s   0.036000s     661928kB      573948kB        Clients concurrently and killed
+6   Nectar      10          0         0.044000s   0.020000s     145804kB      82412kB         Clients consecutively and killed
+7   Nectar      10          10        0.008000s   0.016000s     145804kB      80272kB         Clients consecutively and won
+
+Tests 1&2 and 3&4 were equivalent tests ran on different server machines. Comparing the two machines, it seems that
+neither is always faster in terms of CPU times. CPU times were often shorter when there were fewer clients, however the
+figures are not consistent across all tests (4&7).
+
+An obvious observation is the server process consumed more memory as more clients connected, which is reasonable as the
+server has to store the clients’ states. This is even more evident on the peak memory usage when clients are connected
+concurrently (test 5) as opposed to connected consecutively (test 6&7).
+
+However, it is worrying to see that the memory does reduce to the initial consumption after all the clients have
+disconnected - the finish memory usage of tests 3&4 are much higher than their respective tests 1&2 figures, possibly
+suggesting memory leaks are present in the server program. But the peak memory usage generally only increases with the
+maximum number of concurrently connected clients at any given time (tests 5vs6).
+
+It is worth mentioning (not shown in the results) that the game protocol used to message between the server and clients
+is pretty inefficient. Currently the protocol requires every message sent to be exactly 192 bytes (7 bytes header taken
+up by the header). Considering how the client usually sends only 4 characters (bytes) to the server, it would be more
+appropriate to have a variable sized messaging protocol to reduce the bandwidth requirement of this application.
