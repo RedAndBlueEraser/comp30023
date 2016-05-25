@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #define GP_SIZE        192
 #define GP_HEADER_SIZE 7
+#define GP_SERV_FULL   "SERVFUL"
 #define GP_DISP_MSG    "DISPMSG"
 #define GP_GUESS_REQ   "REQUEST"
 #define GP_GUESS_FBK   "FEEDBAC"

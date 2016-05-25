@@ -115,6 +115,11 @@ int main(int argc, char *argv[])
             printf("You lose. Better luck next time.\n");
             is_end_game = 1;
         }
+        else if (strncmp(buffer, GP_SERV_FULL, GP_HEADER_SIZE) == 0)
+        {
+            printf("Server is full. Try connecting later.\n");
+            is_end_game = 1;
+        }
 
         memset(buffer, 0, sizeof(buffer));
     }
