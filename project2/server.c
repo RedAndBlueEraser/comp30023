@@ -84,7 +84,7 @@ void sig_handler(int sig_number)
 {
     struct rusage usage;
 
-    if (sig_number == SIGINT)
+    if (sig_number == SIGINT || sig_number == SIGTERM)
     {
         // Close socket.
         close(socket_fd);
@@ -309,6 +309,11 @@ int main(int argc, char *argv[])
 
     // Set signal handler function.
     if (signal(SIGINT, sig_handler) == SIG_ERR)
+    {
+        perror("signal");
+        exit(1);
+    }
+    if (signal(SIGTERM, sig_handler) == SIG_ERR)
     {
         perror("signal");
         exit(1);
