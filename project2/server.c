@@ -27,8 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Constants ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#define LOG_FILE_FILENAME "log.txt"
-#define CLIENTS_MAX_LEN   20
+#define LOG_FILE_FILENAME     "log.txt"
+#define CLIENTS_NOW_MAX_COUNT 40
 
 #define MAX_GUESSES_COUNT 10
 
@@ -76,9 +76,9 @@ void *pthread_routine(void *param);
 FILE *log_file_fd;
 int socket_fd;
 struct sockaddr_in server_address;
-int clients_count = 0, clients_win_count = 0;
+int clients_now_count = 0, clients_count = 0, clients_win_count = 0;
 pthread_attr_t pthread_attr;
-pthread_mutex_t log_file_mutex, clients_count_mutex, clients_win_count_mutex;
+pthread_mutex_t log_file_mutex, clients_now_count_mutex, clients_count_mutex, clients_win_count_mutex;
 
 void sig_handler(int sig_number)
 {
@@ -158,6 +158,22 @@ void sig_handler(int sig_number)
     return;
 }
 
+void increment_clients_now_count()
+{
+    pthread_mutex_lock(&clients_now_count_mutex);
+    clients_now_count++;
+    pthread_mutex_unlock(&clients_now_count_mutex);
+    return;
+}
+
+void decrement_clients_now_count()
+{
+    pthread_mutex_lock(&clients_now_count_mutex);
+    clients_now_count--;
+    pthread_mutex_unlock(&clients_now_count_mutex);
+    return;
+}
+
 void increment_clients_count()
 {
     pthread_mutex_lock(&clients_count_mutex);
@@ -209,6 +225,8 @@ int send_gp_message(client_t *client, char buf[], char *msg_type, char *msg_payl
         // Close socket.
         close(socket_fd);
 
+        decrement_clients_now_count();
+
         pthread_exit(NULL);
     }
     else if (sent_msg_size == WRITE_OTHER_ERROR)
@@ -229,6 +247,8 @@ int send_gp_message(client_t *client, char buf[], char *msg_type, char *msg_payl
         fprintf(log_file_fd, "(%d) client disconnected\n", socket_fd);
         fflush(log_file_fd);
         pthread_mutex_unlock(&log_file_mutex);
+
+        decrement_clients_now_count();
 
         pthread_exit(NULL);
     }
@@ -267,6 +287,8 @@ int receive_raw_message(client_t *client, char buf[])
         fflush(log_file_fd);
         pthread_mutex_unlock(&log_file_mutex);
 
+        decrement_clients_now_count();
+
         pthread_exit(NULL);
     }
 
@@ -276,6 +298,7 @@ int receive_raw_message(client_t *client, char buf[])
 int main(int argc, char *argv[])
 {
     int port;
+    char buffer[GP_SIZE];
     char secret_code[SECRET_CODE_LEN + 1];
     pthread_arg_t *pthread_arg;
     client_t *client;
@@ -375,7 +398,7 @@ int main(int argc, char *argv[])
     }
 
     // Listen on socket.
-    if (listen(socket_fd, CLIENTS_MAX_LEN) == -1)
+    if (listen(socket_fd, CLIENTS_NOW_MAX_COUNT) == -1)
     {
         perror("listen");
         exit(1);
@@ -405,6 +428,26 @@ int main(int argc, char *argv[])
         if (client->new_socket_fd == -1)
         {
             perror("accept");
+            free(pthread_arg);
+            continue;
+        }
+
+        // Close connection with client if server is full.
+        if (clients_now_count >= CLIENTS_NOW_MAX_COUNT)
+        {
+            // Log server full.
+            pthread_mutex_lock(&log_file_mutex);
+            fprint_current_time_and_ip_address(log_file_fd, server_address);
+            fprintf(log_file_fd, " server reached max clients connected and cannot serve for ");
+            fprint_ip_address(log_file_fd, client->address);
+            fprintf(log_file_fd, "(%d)\n", client->new_socket_fd);
+            fflush(log_file_fd);
+            pthread_mutex_unlock(&log_file_mutex);
+
+            send_gp_message(client, buffer, GP_SERV_FULL, NULL);
+
+            close(client->new_socket_fd);
+
             free(pthread_arg);
             continue;
         }
@@ -466,6 +509,7 @@ void *pthread_routine(void *param)
     fprintf(log_file_fd, "(%d) client connected\n", client.new_socket_fd);
     fflush(log_file_fd);
 
+    increment_clients_now_count();
     increment_clients_count();
 
     // Generate secret code if none provided.
@@ -572,6 +616,8 @@ void *pthread_routine(void *param)
     fprintf(log_file_fd, "(%d) client disconnected\n", client.new_socket_fd);
     fflush(log_file_fd);
     pthread_mutex_unlock(&log_file_mutex);
+
+    decrement_clients_now_count();
 
     return NULL;
 }
